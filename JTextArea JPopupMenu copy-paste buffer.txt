@@ -1,0 +1,124 @@
+import java.awt.BorderLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import javax.swing.AbstractAction;
+import javax.swing.JMenuItem;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JTextArea;
+import javax.swing.event.CaretEvent;
+import javax.swing.event.CaretListener;
+import icons.IconManager;
+
+/**
+ * JPopupMenu is called with right mouse button on JTextArea.
+ * Copy selected content of JTextArea into buffer
+ * Get String content from buffer into last position JTextArea
+ * @author Ivanradist
+ */
+public class CostructPane extends JPanel implements CaretListener{
+    
+    private JTextArea edt = null;
+    private int lastPos = 0;
+
+    public CostructPane() {
+        super();
+        setLayout(new BorderLayout());
+        edt = new JTextArea();
+        edt.setLineWrap(true);
+        edt.addCaretListener(this);
+        edt.addMouseListener(mlistenerArea);
+
+        add(edt, BorderLayout.CENTER);
+    }
+
+    public void caretUpdate(CaretEvent e) {
+        lastPos = e.getDot();
+    }
+
+    public void insertStr(String aStr) {
+        edt.insert(aStr, lastPos);
+    }
+
+    private MouseListener mlistenerArea = new MouseListener() {
+
+        public void mouseClicked(MouseEvent me) {
+            if (me.getButton() == MouseEvent.BUTTON3) {
+                PopupMenuJournal demo = new PopupMenuJournal();
+                demo.show(me.getComponent(), me.getX(), me.getY());                
+            }
+        }
+
+        public void mousePressed(MouseEvent me) {
+		
+        }
+
+        public void mouseReleased(MouseEvent me) {
+
+        }
+
+        public void mouseEntered(MouseEvent me) {
+
+        }
+
+        public void mouseExited(MouseEvent me) {
+
+        }
+        
+    };
+	
+	private void setClipboard(String s) {
+		StringSelection ss = new StringSelection(s);
+		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(ss, null);
+	};
+
+	private String getClipboard() throws UnsupportedFlavorException, IOException{
+		Object content = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null).getTransferData(DataFlavor.stringFlavor);
+		return content.toString();
+	};
+    
+    class PopupMenuJournal extends JPopupMenu {
+        JMenuItem copyItem;
+        JMenuItem pasteItem;
+        public PopupMenuJournal(){
+            copyItem = new JMenuItem(new ActCopyToBuffer());
+            add(copyItem);        
+            pasteItem = new JMenuItem(new ActPasteFromBuffer());
+            add(pasteItem);   
+        }
+    }
+    
+    class ActCopyToBuffer extends AbstractAction {
+
+        public ActCopyToBuffer() {
+            super("Копировать", IconManager.getIcon("copy.gif"));
+            putValue(SHORT_DESCRIPTION, "Копировать в буфер обмена.");
+        }
+        
+        @Override
+        public void actionPerformed(ActionEvent ev) {
+            LiaUtil.setClipboard(edt.getSelectedText());            
+        }
+        
+    }
+    
+    class ActPasteFromBuffer extends AbstractAction {
+
+        public ActPasteFromBuffer() {
+            super("Вставить", IconManager.getIcon("paste.gif"));
+            putValue(SHORT_DESCRIPTION, "Вставить из буфера обмена.");
+        }
+        
+        @Override
+        public void actionPerformed(ActionEvent ev) {
+            try {
+                insertStr(LiaUtil.getClipboard());
+            } catch (Exception ex) {
+                Logger.getLogger(RequestCostructPane.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        
+    }
+	
+}
